@@ -1,0 +1,25 @@
+---
+title: "Bayesian Linear Regression"
+author: "Remy"
+date: "9/16/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+
+A linear regression is a statistical model that assumes a linear relationship between a numerical output variable $y$ and a set of input variables $\mathbf{x_1, x_2, \ldots, x_p}$, which allows to write the output variable as a linear combination of the output variable(s) as follows:
+
+\begin{equation}
+\label{eqn:somelabel}
+\mathbf{y} = \beta_0 + \beta_1\mathbf{x_1} + \beta_2\mathbf{x_2} + \ldots + \beta_p\mathbf{x_p} + \boldsymbol{\epsilon}
+\end{equation}
+
+The unknown regression coefficients in the equation \ref{eqn:somelabel} above can be estimated either by assuming that they have fixed values or by means of Bayesian inference assuming that they are random variables from a given probability distribution. In this post,  we are focusing on Bayesian inference in linear regression.
+
+# Bayesian linrear regression
+
+
