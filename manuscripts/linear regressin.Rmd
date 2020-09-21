@@ -2,7 +2,12 @@
 title: "Bayesian Linear Regression"
 author: "Remy"
 date: "9/16/2020"
-output: pdf_document
+output:
+  pdf_document: default
+header-includes:
+   - \usepackage{amsmath}
+   - \usepackage{amssymb}
+   - \usepackage{setspace}\doublespacing
 ---
 
 ```{r setup, include=FALSE}
@@ -11,15 +16,94 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Introduction
 
-A linear regression is a statistical model that assumes a linear relationship between a numerical output variable $y$ and a set of input variables $\mathbf{x_1, x_2, \ldots, x_p}$, which allows to write the output variable as a linear combination of the output variable(s) as follows:
+A linear regression is a statistical model that assumes a linear relationship between a numerical output variable $y$ and a set of input variables $\mathbf{x_1, x_2, \ldots, x_p}$, which allows to formulate the model by writing the output variable as a linear combination of the input variable(s) as follows:
 
 \begin{equation}
-\label{eqn:somelabel}
-\mathbf{y} = \beta_0 + \beta_1\mathbf{x_1} + \beta_2\mathbf{x_2} + \ldots + \beta_p\mathbf{x_p} + \boldsymbol{\epsilon}
+\label{eqn:l.Reg}
+\mathbf{y} = \beta_0 + \beta_1\mathbf{x_1} + \beta_2\mathbf{x_2} + \ldots + \beta_p\mathbf{x_p} + \boldsymbol{\epsilon}.
 \end{equation}
 
-The unknown regression coefficients in the equation \ref{eqn:somelabel} above can be estimated either by assuming that they have fixed values or by means of Bayesian inference assuming that they are random variables from a given probability distribution. In this post,  we are focusing on Bayesian inference in linear regression.
+which is equivalent to
+
+$$y_i = \boldsymbol{x_i^{T}\beta} + \epsilon_i$$ or \
+$$\boldsymbol{y} = \boldsymbol{X\beta + \epsilon}$$ \ with 
+$\epsilon_i \sim N(0,\sigma^2)$ or $\boldsymbol{\epsilon} \sim N(0,\sigma^2I_n)$ respectively.
+
+
+The unknown parameters in the equation \ref{eqn:l.Reg} above, which are the regression coefficients $\boldsymbol{\beta} = (\beta_1, \beta_2, \ldots, \beta_p)'$ and the variance of the error term, $\sigma^2$, can be estimated in two different ways; either by assuming they have fixed values that are commonly estimated by classical methods of ordinary least square, or using Bayesian inference where parameters are modeled as random variables using probability distributions. For the rest of this post, we are going to focus on the implementation of linear regression, especially model parameters estimate in Bayesian framework. 
 
 # Bayesian linrear regression
+
+## Bayesian inference
+Bayesian inference is generally implemented in two main steps. First, we start with  possible prior knowledge about model parameters called prior distributions, and then  update the prior using Bayes theorem to get the posterior distribution as follows:
+
+\begin{equation}\label{eqn:Bayesian_theorm}
+[\boldsymbol{\theta}|X] = \frac{[X |\boldsymbol{\theta}][\boldsymbol{\theta}]}{[X]} \propto [X |\boldsymbol{\theta}][\boldsymbol{\theta}],
+\end{equation}
+where $\boldsymbol{\theta} = (\boldsymbol{\beta}, \sigma^2)'$
+There are two common issues in Bayesian inference related to the Bayesian theorem in Equation \ref{eqn:Bayesian_theorm} above: One being that the marginal distribution of the data, [X] is not easy to compute, especially in high dimensional data, and the other is that in the case of non conjugate prior, the posterior $[X |\boldsymbol{\theta}]$ is generally intractable.
+
+To overcome these computational challenges, in Bayesian inference the posterior distribution is estimated by using Markov Chain Monte Carlo (MCMC) methods, which allows us to estimate the posterior distribution by sampling from it. More explicitly, the posterior distribution is estimated by constructing a Markov Chain that has the target posterior distribution as its limiting distribution.
+Nowadays, there are various methods to implement MCMC, but  the most common are Gibbs sampler (GS)and Metropolis Hastings (MH) methods. Gibbs Sampler is used when the full conditional distributions are analytically known, while (MH) is commonly used when the full conditional posterior distribution of parameters cannot be calculated analytically, which is generally the case for non conjugate priors. 
+
+In practice, the main difference between the two is related to their acceptance probability during MCMC iterations. 
+For each MCMCM iteration in (MH), we propose a new value for model parameters from a proposal distribution, which is usual a normal distribution, and accept the proposed value with some acceptance probability $\alpha < 1$. However, in (GS) the acceptance probability is always equal to 1 because in (GS) we sample from the full conditional distributions rather than the proposal distribution as in (MH).
+
+### Gibbs Sampler algorithm 
+
+* Suppose we have a vector of parameters $\boldsymbol{\theta} = (\theta_1,\ldots\,\theta_d)' = (\beta_1, \beta_2,\ldots\,\beta_p, \sigma^2)'$, in the case of linear regression, 
+
+* $[\theta_j|\{\theta_k, k\neq j\}, X]$, a full conditional posterior for each parameter.
+
+* Initialize $\boldsymbol{\boldsymbol{\theta}}$, to $(\theta_1^0,\ldots,\theta_d^0)'$
+
+* then for $t = 1,\ldots, N$, sample:
+\begin{align*}
+&\theta_1^{(t)} && from && [\theta_1^{(t)}|\{\theta_j^{(t-1)},j\neq 1\}, X]\\
+&\theta_2^{(t)} && from  && [\theta_2^{(t)}|\theta_1^{(t)},\{\theta_j^{(t-1)},j>2\}, X]\\
+&\theta_3^{(t)} && from && [\theta_3^{(t)}|\theta_1^{(t)},\theta_2^{(t)} ,\{\theta_j^{(t-1)},j>3\}, X]\\
+&\vdots  && \vdots          &&    \vdots \\
+&\theta_d^{(t)} && from && [\theta_d^{(t)}|\{\theta_j^{(t)},j<d\}, X],
+\end{align*}
+
+with $N$, the number of MCMC iterations, $X$ the data matrix, and $d$ the number of model parameters.
+As a result, as time $t\rightarrow\infty$, the joint distribution of a sample $\boldsymbol{\theta}^{(t)} = \theta_1^{(t)},\ldots,\theta_d^{(t)}$ converges to the true joint distribution of $\boldsymbol{\theta}$ 
+(Gelfand & Smith 1990).
+
+### Metropolis hastings algorithm 
+
+* Suppose we have our target distribution $[\boldsymbol{\theta} | .]$, and the the proposal distribution $[\boldsymbol{\theta^*|\theta}]$.
+
+
+* Let $\boldsymbol{\theta}^{(t)}$ be the current value of $\boldsymbol{\theta}$, and $\boldsymbol{\theta}^{(t+1)}$ the new value of $\boldsymbol{\theta}$
+
+Then initialize $\boldsymbol{\theta}$ to $\boldsymbol{\theta}^{(0)}$, and\
+
+For $t = 1,\ldots,N$, do:\
+propose $\boldsymbol{\theta}^*\sim [\boldsymbol{\theta}^* | \boldsymbol{\theta}^{(t)}]$\
+Compute the acceptance probability:
+\[
+ \alpha = min\left(1,\frac{[\boldsymbol{\theta}^* | .]}{[\boldsymbol{\theta}^{(t)} | .]}\times
+ \frac{[\boldsymbol{\theta}^{(t)} |\boldsymbol{\theta}^*]}{[\boldsymbol{\theta}^*|\boldsymbol{\theta}^{(t)} ]}\right)
+\]
+Sample  $u\sim Unif[0,1]$\
+If $u < \alpha$, set $\boldsymbol{\theta}^{(t+1)} = \boldsymbol{\theta}^*$\
+otherwise, set $\boldsymbol{\theta}^{(t+1)} = \boldsymbol{\theta}^{(t)}$\
+End
+
+
+## Gibbs sampler in linear regression
+
+
+
+
+
+
+
+
+
+
+
+
 
 
