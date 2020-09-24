@@ -4,6 +4,7 @@ author: "Remy"
 date: "9/16/2020"
 output: 
   pdf_document
+  
 header-includes:
    - \usepackage{amsmath}
    - \usepackage{amssymb}
@@ -47,8 +48,7 @@ Bayesian inference is generally implemented in two main steps. First, we start w
 
 where $\boldsymbol{\theta} = (\boldsymbol{\beta}, \sigma^2)'$.
 
-There are two common issues in Bayesian inference related to the Bayesian theorem presented in Equation \ref{eqn:Bayesian_theorm}: One is that the marginal distribution of the data, [X] is not easy to compute, especially in high dimensional data, and the other one is that in the case of non conjugate prior, the posterior 
-$[X |\boldsymbol{\theta}]$ is generally intractable. An intractable distribution is the one that cannot be evaluated analytically and therefore, requires special computation methods.
+There are two common issues in Bayesian inference related to the Bayesian theorem presented in Equation \ref{eqn:Bayesian_theorm}: One is that the marginal distribution of the data, [X] is not easy to compute, especially in high dimensional data, and the other one is that in the case of non conjugate prior, the posterior $[X |\boldsymbol{\theta}]$ is generally intractable. An intractable distribution is the one that cannot be evaluated analytically and therefore, requires special computation methods.
 
 To overcome these computational challenges, in Bayesian inference the posterior distribution is estimated by using Markov Chain Monte Carlo (MCMC) methods, which allows us to estimate the posterior distribution by sampling from it. MCMC allows us to estimated the posterior distribution by constructing a Markov Chain that has the target posterior distribution as its limiting distribution.
 Nowadays, there are various methods to implement MCMC, but  the most common are Gibbs sampler (GS) and Metropolis Hastings (MH) methods. The Gibbs Sampler is used when the full conditional distributions are analytically known, while MH is commonly used when the full conditional posterior distribution of parameters cannot be calculated analytically, which is generally the case for non conjugate priors. 
@@ -184,6 +184,10 @@ $\sigma^2|\boldsymbol{y,\beta} \sim N(\boldsymbol{X\beta, \sigma^2I_n}) \times I
 
 
 ## Implementing Gibbs Sampler for linear regression in R
+
+
+
+
 
 
 
