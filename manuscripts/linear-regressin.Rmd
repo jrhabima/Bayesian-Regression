@@ -182,7 +182,129 @@ $\sigma^2|\boldsymbol{y,\beta} \sim N(\boldsymbol{X\beta, \sigma^2I_n}) \times I
 
 ## Implementing Gibbs Sampler for linear regression in R
 
+# Gibbs sampler in r
 
+```{r,}
+library(MASS)
+library(invgamma)
+library(ggplot2)
+```
+# create the data
+
+```{r, echo = TRUE}
+set.seed(111)
+k <- 5
+n <- 100
+mu_0 <- rep(5,k)
+a <- 1
+b <- 1
+sigma_sq <- rinvgamma(a,b)
+X <- cbind(1,mvrnorm(n, mu_0, diag(sqrt(sigma_sq), nrow = k, ncol = k)))
+p = ncol(X)
+beta_0 <- mvrnorm(1, rep(0,p), diag(1, nrow = p, ncol = p))
+beta_0
+y <- X %*% beta_0 + rnorm(n)
+head(y)
+```
+
+# Gibbs sampler
+
+```{r, echo = TRUE}
+set.seed(100)
+MCMC <- function(niter) {
+  
+  #Itial values
+  
+  beta <- matrix(0, niter, p)
+  sigma <- rep(0, niter)
+  sigma[1] <- 1
+  
+  # sample beta 
+  
+  for(i in 2 : niter){
+    
+    mu <- solve(t(X) %*% (X)) %*% (t(X) %*% (y)) # mean of beta
+    Dispersion <- solve(t(X) %*% (X)) * sigma_sq[i-1] # covariance matrix for beta
+    beta[i,] <- mvrnorm(1, mu, Dispersion)
+    
+    # sample sigma_sq
+    
+    b_n <- 0.5 * t(y - X %*% beta[i,]) %*% (y - X %*% beta[i,]) + 1
+    a_n <- (n/2) + 1
+    sigma_sq[i] <- rinvgamma(1, a, rate = b)
+    
+  }
+  return(
+    list(
+       beta = beta, 
+    sigma_sq = sigma_sq
+    )
+   
+  )
+    
+    
+      
+}
+
+```
+
+# MCMC results
+
+```{r,}
+out <- MCMC(5000)
+str(out)
+burn_in <- seq(1:2000)
+beta_out <- out[[1]][-burn_in, ]
+sigma_out <- out[[2]][-burn_in]
+
+
+matplot(beta_out, type = "l")
+
+plot(sigma_out, type = "l")
+layout(matrix(1:6, 2,3))
+apply(beta_out, 2, function(x){hist(x, xlim = c(-3,3))})
+apply(beta_out, 2, function(x){plot(density(x), col = "red")})
+
+```
+# Plot the coeficients
+
+
+# Posterior means 
+
+```{r, }
+# Post_mean_beta
+
+beta_hat <- apply(beta_out, 2, mean)
+
+# Post_mean_sigma_sq
+
+mean(sigma_out)
+```
+# Digonises
+
+```{r Diagnosis, echo=FALSE}
+y_pred <- X %*% beta_hat 
+residuals <- y - y_pred
+
+# Residual plots
+layout(matrix(1:2, 1,2))
+hist(residuals, main = "residual histogram")
+qqnorm(residuals, main = "residual qqplot")
+qqline(residuals, col = "blue")
+
+# Observed vs predicted values
+
+plot(y, y_pred, main = "true values vs predicted values")
+abline(c(0, 1), col ="blue") ## a line of 45 degree angle
+
+data_out <- data.frame(y = y, y_pred = y_pred)
+ggplot(data_out) + 
+   geom_density(aes(y, color="true density")) +
+   geom_density(aes(y_pred, color="predicted density")) 
+   scale_color_manual(name = "density",
+                          breaks = c("red", "pred"),
+                           values = c("true density" = "blue", "predicted density" = "red"))
+```
 
 
 
