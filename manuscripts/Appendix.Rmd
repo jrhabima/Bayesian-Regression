@@ -1,0 +1,243 @@
+# Load the packages
+
+```{r}
+library(MASS)
+library(mvtnorm)
+library(invgamma)
+library(ggplot2)
+library(here)
+library(coda)
+library(tidyverse)
+library(tidybayes)
+library(bayesplot)
+source(here::here("R", "convert-to-coda.R"))
+```
+
+# Gibbs sampling
+
+##create the data for a simple linear regression
+
+```{r }
+set.seed(111)
+k <- 5
+n <- 100
+mu_0 <- rep(5,k)
+a <- 1
+b <- 1
+sigma_sq <- rinvgamma(a,b)
+X <- cbind(1,mvrnorm(n, mu_0, diag(sqrt(sigma_sq), nrow = k, ncol = k)))
+p = ncol(X)
+mean_true_beta <- rep(0, 6)
+true_beta <- mvrnorm(1, mean_true_beta, diag(1, nrow = p, ncol = p))
+y <- X %*% true_beta + rnorm(n)
+
+plot(y, X %*% true_beta)
+```
+
+# Codes
+
+```{r, echo = TRUE, warning=FALSE, message=FALSE}
+set.seed(100)
+MCMC <- function(niter) {
+  
+  #Initial values
+  
+  beta <- matrix(0, niter, p)
+  sigma <- rep(0, niter)
+  sigma[1] <- 1
+  
+  # sample beta 
+  
+  for(i in 2 : niter){
+    
+    mu <- solve(t(X) %*% (X)) %*% (t(X) %*% (y)) # mean of beta
+    Dispersion <- solve(t(X) %*% (X)) * sigma_sq[i-1] # covariance matrix for beta
+    beta[i,] <- mvrnorm(1, mu, Dispersion)
+    
+    # sample sigma_sq
+    
+    b_n <- 0.5 * t(y - X %*% beta[i,]) %*% (y - X %*% beta[i,]) + 1
+    a_n <- (n/2) + 1
+    sigma_sq[i] <- rinvgamma(1, a, rate = b)
+    
+  }
+  return(
+    list(
+       beta = beta, 
+    sigma_sq = sigma_sq
+    )
+   
+  )
+    
+    
+      
+}
+
+```
+
+# Output
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+N = 5000
+out <- MCMC(N)
+burn_in <- seq(1:2000)
+beta_out <- out[[1]][-burn_in, ]
+sigma_out <- out[[2]][-burn_in]
+
+```
+# Model disgnostics
+
+```{r, echo = FALSE, warning=FALSE}
+
+# Rearranging the mcmc output to comfort with coda package
+
+out_coda <- as.mcmc(convert_to_coda_single_chain(out))
+out_coda <- tidy_draws(out_coda) ## convert to tidybay
+
+```
+
+### Other plots illustrating posterior distribution for our model parameters.
+
+
+```{r,  echo = FALSE, warning = FALSE}
+plot_title1 <- ggtitle("Credible intervals for model parameter")
+plot_title2 <- ggtitle("Credible intervals for regression coefficints")
+title3 <- ggtitle("Posterior density for regression coefficients")
+
+par(mfrow =c(2,2))
+out_coda %>%
+    mcmc_intervals(regex_pars = c("beta", "sigma_sq")) + plot_title1
+out_coda %>%
+mcmc_areas(regex_pars = c("beta"),
+  prob = 0.8, # 80% intervals
+  prob_outer = 0.99, # 99%
+  point_est = "mean") + plot_title2
+
+color_scheme_set("blue")
+mcmc_dens(out_coda, regex_pars = c("beta")) + title3
+
+```
+
+## Regression model diagnositcs
+
+```{r Diagnosis, echo = FALSE, warning=FALSE, fig.cap = "regression model diagnoses plots"} 
+
+beta_hat <- apply(beta_out, 2, mean) # Post_mean_beta
+
+y_pred <- X %*% beta_hat
+
+residuals <- y - y_pred
+
+# Residual plots -->
+
+#layout(matrix(1:6, 3, 3))
+par(mfrow = c(2,2))
+hist(residuals, main = "residual histogram")
+qqnorm(residuals, main = "residual qqplot")
+abline(c(0, 1), col ="blue")
+plot( y_pred, residuals, main = "resuduals vs fitted values")
+plot(y, y_pred, main = "Observed values vs predicted values")
+abline(c(0, 1), col ="blue") ## a line of 45 degree angle
+
+data_out <- data.frame(y = y, y_pred = y_pred)
+ggplot(data_out) +
+  geom_density(aes(y, color ="observed density")) +
+   geom_density(aes(y_pred, color = "predicted density")) +
+   ggtitle("comparison between observed density and predicted density") 
+
+```   
+
+# Metropolis Hastings
+
+
+## Prior distribution
+
+
+prior <- function(beta, sigma2){  
+    
+    prior_beta <- dmvnorm(beta, rep(0, p), diag(1, nrow = p, ncol = p), log = T)  
+    prior_sigma2  <- dunif(sigma2 , min = 0, max = 30, log = T)  
+    return(prior_beta + prior_sigma2)
+}
+
+prior(rep(1,p) ,1)
+
+# Likelihood 
+
+
+likelihood <- function(param){   
+     
+    mean_y = X %*% beta 
+    log_likelihood = dnorm(y, mean_y, sd = sqrt(sigma2), log = T)
+    return(sum(log_likelihood))   
+}
+likelihood(rep(1,p) ,1)
+
+
+# Posterior
+
+posterior <- function(beta, sigma2){
+    
+    return(prior(beta, sigma2) + likelihood(beta, sigma2))
+}
+posterior(c(rep(1,p) ,1))
+
+
+proposal <- function(beta, sigma2){ 
+    prop_mean = c(beta, sigma2)
+    prop_sd = rep( 0.2, length(c(beta, sigma2)))
+    return(mvrnorm(1, prop_mean, diag(prop_sd)))
+    
+}
+propose <- proposal(rep(1,p) ,1)
+
+```
+# Metropolis Hastings algorithm
+
+```{r}
+
+MH_MCMC <- function(startvalue, niter){
+    chain     <- array(dim = c(niter, 7))
+    chain[1,] <- startvalue 
+    for (i in 2 : niter){ 
+        #beta_prop <- mvrnorm(1, , diag(prop_sd)))
+        proposed    <- proposal(chain[i-1,])
+        
+        if(proposed[7] < 0){
+            proposed <- chain[i-1,]
+            
+        } else {
+            
+            proposed <- proposed
+        }
+        
+        accep_prob  <- exp(posterior(proposed) - posterior(chain[i-1,]))
+        
+        if(runif(1) < accep_prob){ 
+            chain[i,] <- proposed 
+            
+        }else{
+            
+            chain[i,] <- chain[i-1,] 
+        }
+    } 
+    return(chain)
+}
+```
+
+# MCMC results
+
+
+# startvalue = c(rep(1,p)), 1 
+# chain = MH_MCMC(startvalue, 1000)
+# chain
+# 
+# 
+# # Trace plots
+# 
+# 
+# #par(mfrow = c(2,1))
+# matplot(chain, type = "l",  xlab = "iterations", col = c("blue", "purple", "black"))
+# legend("topright", c(" beta_0", "beta1", "sigma_sq"),
+#        col = c("blue", "purple", "black"), lty= 1, cex = 0.8)
+# 
