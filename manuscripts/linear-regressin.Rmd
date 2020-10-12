@@ -203,26 +203,26 @@ $\sigma^2|\boldsymbol{y,\beta} \sim N(\boldsymbol{X\beta, \sigma^2I_n}) \times I
 ## Implementing Gibbs Sampler for linear regression in R
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
-# source(here::here("R", "libraries.R"))
-# source(here::here("R", "convert-to-coda.R"))
-# source(here::here("R", "mcmc_lm.R"))
-# source(here::here("R", "mcmc_lm_mh.R"))
+source(here::here("R", "libraries.R"))
+source(here::here("R", "convert-to-coda.R"))
+source(here::here("R", "mcmc_lm.R"))
+#source(here::here("R", "mcmc_lm_mh.R"))
 ```
 
 
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
-library(MASS)
-library(invgamma)
-#library(ggplot2)
-library(here)
-library(coda)
-library(tidyverse)
-library(tidybayes)
-library(bayesplot)
-source(here::here("R", "convert-to-coda.R"))
-source(here::here("R", "mcmc_lm.R"))
-#source(here::here("R", "mcmc_lm_mh.R"))
+# library(MASS)
+# library(invgamma)
+# #library(ggplot2)
+# library(here)
+# library(coda)
+# library(tidyverse)
+# library(tidybayes)
+# library(bayesplot)
+# source(here::here("R", "convert-to-coda.R"))
+# source(here::here("R", "mcmc_lm.R"))
+# #source(here::here("R", "mcmc_lm_mh.R"))
 ```
 
 # Simulated data for model training and testing
