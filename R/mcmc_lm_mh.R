@@ -16,7 +16,7 @@ mcmc_lm_mh <- function(niter, beta_tune, sigma2_tune){
     
     likelihood <- function(beta, sigma2){   
         
-        mean_y = X %*% true_beta
+        mean_y = X %*% beta
         log_likelihood = dnorm(y, mean_y, sd = sqrt(sigma2), log = T)
         return(sum(log_likelihood))   
     }
