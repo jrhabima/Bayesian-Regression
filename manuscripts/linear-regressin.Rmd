@@ -209,23 +209,7 @@ source(here::here("R", "mcmc_lm.R"))
 #source(here::here("R", "mcmc_lm_mh.R"))
 ```
 
-
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
-# library(MASS)
-# library(invgamma)
-# #library(ggplot2)
-# library(here)
-# library(coda)
-# library(tidyverse)
-# library(tidybayes)
-# library(bayesplot)
-# source(here::here("R", "convert-to-coda.R"))
-# source(here::here("R", "mcmc_lm.R"))
-# #source(here::here("R", "mcmc_lm_mh.R"))
-```
-
-# Simulated data for model training and testing
+# Simulated data for model training and testing 
 
 In this post we use simulated data consisting of a matrix of covariates $\mathbf{X} = (\mathbf{x_1, \ldots, \mathbf{x_p}})'$, and predetermined parameters $\boldsymbol{\beta} = (\beta_0, \ldots, \beta_p)'$ and $\sigma^2$, where p represents the number covariates including the column of ones for the intercept $\beta_0$. 
 In this example we simulate the data as follows:
@@ -337,7 +321,9 @@ out_coda %>%
 color_scheme_set("blue")
 mcmc_dens(out_coda, regex_pars = c("beta")) + title3 
 ```
+
 ### Regression model diagnostics
+
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 beta_post_mean <- apply(out_lm$beta, 2, mean) # Posterior mean of beta
@@ -400,31 +386,31 @@ We know by the definition of a likelihood function that it involves a product of
 Therefore, in calculating the acceptance probability in Equation \ref{eqn:accept-ratio}
 it is advisable to use logarithm transformation to transform the product into the sum leading to a non-zero number.
 
-<!-- ## Implementing MH in R -->
+## Implementing MH in R
 
-<!-- ```{r, echo = TRUE, message=FALSE, warning=FALSE} -->
-
-<!-- niter <- 5000 -->
-<!-- beta_tune <- rep(0.01, p) -->
-<!-- sigma2_tune <- 0.01 -->
-
-
-<!-- if(!file.exists(here::here("results", "out_lm_mh"))){ -->
-
-<!--     ptm <- proc.time() # timing -->
-
-<!--     out_lm_mh <- mcmc_lm_mh(niter, beta_tune, sigma2_tune)  -->
-<!--     save(out_lm_mh,  file = here::here("results", "out_lm_mh")) -->
-
-<!--    proc.time() - ptm -->
-
-<!-- }  -->
-
-<!-- load(here::here("results", "out_lm_mh")) -->
-
-<!-- ``` -->
-
-<!-- # Metropolis Hastings model disgnostics -->
+<!-- # ```{r, echo = TRUE, message=FALSE, warning=FALSE} -->
+<!-- #  -->
+<!-- # niter <- 5000 -->
+<!-- # beta_tune <- rep(0.01, p) -->
+<!-- # sigma2_tune <- 0.01 -->
+<!-- #  -->
+<!-- #  -->
+<!-- # if(!file.exists(here::here("results", "out_lm_mh"))){ -->
+<!-- #  -->
+<!-- #     ptm <- proc.time() # timing -->
+<!-- #  -->
+<!-- #     out_lm_mh <- mcmc_lm_mh(niter, beta_tune, sigma2_tune) -->
+<!-- #     save(out_lm_mh,  file = here::here("results", "out_lm_mh")) -->
+<!-- #  -->
+<!-- #    proc.time() - ptm -->
+<!-- #  -->
+<!-- # } -->
+<!-- #  -->
+<!-- # load(here::here("results", "out_lm_mh")) -->
+<!-- #  -->
+<!-- # ``` -->
+<!-- #  -->
+<!-- # # Metropolis Hastings model disgnostics -->
 
 <!-- ## Check mcmc performance -->
 

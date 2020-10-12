@@ -1,5 +1,6 @@
 library(MASS)
 library(invgamma)
+library(mvtnorm)
 library(ggplot2)
 library(here)
 library(coda)
