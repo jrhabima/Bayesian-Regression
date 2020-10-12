@@ -1,0 +1,8 @@
+library(MASS)
+library(invgamma)
+library(ggplot2)
+library(here)
+library(coda)
+library(tidyverse)
+library(tidybayes)
+library(bayesplot)
