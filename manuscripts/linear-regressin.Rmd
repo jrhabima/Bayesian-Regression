@@ -17,9 +17,7 @@ header-includes:
 
 # Introduction to linear regression
 
-Linear regression is a statistical model that assumes a linear relationship between a numerical output variable $y$, commonly called the response variable,  and at least one of the $p$ input variables $\mathbf{x_1, x_2, \ldots, x_p}$, commonly known as predictors. Assuming a linear relationship between the response and the predictor(s) allows us to formulate the model by writing the response variable as a linear combination of the predictor(s) as shown in Equation \ref{eqn:l.Reg1}.
-
-Fitting a linear regression is training the model on the observed data to learn about the linear relationship between the response and the predictor variables, in order to identify potential predictors that constitute the regression equation of the best fit. Potential predictors are the ones with significant linear relationship with the response. In practice, the significance of a predictor variable, $\mathbf{x}_j$ with $j = 1, \ldots, p$, is determined by the value of its corresponding coefficient $\beta_j$ as shown in the Equation \ref{eqn:l.Reg1} below:  
+Linear regression is a statistical model that assumes a linear relationship between a numerical output variable $y$, commonly called the response variable,  and at least one of the $p$ input variables $\mathbf{x_1, x_2, \ldots, x_p}$, generally known as predictors, independent variables, or covariates. Assuming a linear relationship between the response and the predictor(s) allows us to formulate the model by writing the response variable as a linear combination of the predictor(s) as shown in Equation \ref{eqn:l.Reg1}; hence, a linear regression.
 
 \begin{equation}
 \label{eqn:l.Reg1}
@@ -33,16 +31,16 @@ which is equivalent to
 \mathbf{y} = X\boldsymbol{\beta + \epsilon}
 \end{equation}
 
-with $\boldsymbol{\epsilon} \sim N(0,\sigma^2I_n)$.
-The values of the regression coefficients $\beta_j$ in Equation \ref{eqn:l.Reg1} determines de strength of the linear relationship between the response variable and the predictor $\mathbf{x_j}$
+with $\boldsymbol{\epsilon} \sim N(\mathbf{0},\sigma^2I_n)$.
+
+Fitting a linear regression means training the model on the observed data in order to find regression coefficients $\boldsymbol{\beta} = (\beta_1, \beta_2, \ldots, \beta_p)'$ that best describes the linear relationship between the response and the predictor variables. The values of the regression coefficients $\beta_j$ in Equation \ref{eqn:l.Reg1} determines de strength of the linear relationship between the response variable and the predictor $\mathbf{x_j}$, which allows us to identify potential predictors to be included in the model. Therefore, reliability of a linear regression depends mainly on the accuracy in regression coefficients estimation and in selection of potential predictors.
 
 The unknown parameters in Equation \ref{eqn:l.Reg1}, which are the regression coefficients $\boldsymbol{\beta} = (\beta_1, \beta_2, \ldots, \beta_p)'$ and the variance of the error term, $\sigma^2$, can be estimated either by frequentist methods, the most common for linear regression being least square methods, or in Bayesian framework. In frequentist models, parameters are assumed to be unknown, but with fixed values, while in Bayesian inference parameters are modeled as random variables through probability distributions. 
-
-The rest of this post consists of two main sections: The first section gives a brief introduction to Bayesian inference, and the second section talks about Bayesian inference in linear regression models with an example.
+The rest of this post consists of two main sections: The first section gives a brief introduction to Bayesian inference, while the second section talks about Bayesian inference in linear regression models with an example using simulated data.
 
 # Bayesian inference
 
-Bayesian inference is generally implemented in two main steps. First, we start with possible prior knowledge about model parameters, commonly called prior distributions; and second, given that we have observed new data, we update the prior distributions using Bayes theorem to get the posterior distributions as follows:
+Bayesian inference is generally implemented in two main steps. First, we start with possible prior knowledge about model parameters, commonly called prior distributions; and then, given that we observe new data, we update the prior distributions using Bayes theorem to get the posterior distributions as follows:
 
 \begin{equation}\label{eqn:Bayesian_theorm}
 [\boldsymbol{\theta}|X] = \frac{[X |\boldsymbol{\theta}][\boldsymbol{\theta}]}{[X]} \propto [X |\boldsymbol{\theta}][\boldsymbol{\theta}],
@@ -50,22 +48,23 @@ Bayesian inference is generally implemented in two main steps. First, we start w
 
 where $\boldsymbol{\theta} = (\boldsymbol{\beta}, \sigma^2)'$.
 
-There are two common issues in Bayesian inference related to the Bayesian theorem presented in Equation \ref{eqn:Bayesian_theorm}: One is that the marginal distribution of the data, [X] is not easy to compute, especially in high dimensional data, because it involves high dimensional integrals. The other issue  occurs in the case of non-conjugate prior, where the posterior distribution $[X |\boldsymbol{\theta}]$ is generally intractable. An intractable distribution is the one that cannot be evaluated analytically and therefore, requires special computation methods.
+There are two common issues in Bayesian inference related to the Bayesian theorem presented in Equation \ref{eqn:Bayesian_theorm}: One is that the marginal distribution of the data, [X] is not easy to compute, especially in high dimensional data, because it involves high dimensional integrals. The other issue  occurs in the case of non-conjugate prior, where the posterior distribution $[X |\boldsymbol{\theta}]$ is generally intractable. An intractable distribution is the one that cannot be evaluated analytically and therefore, requires special computational methods.
 
-To overcome these computational challenges that occurs in Bayesian inference the posterior distribution is estimated by using Markov Chain Monte Carlo (MCMC) methods, which allows us to estimate the posterior distribution by constructing a Markov Chain that has the target posterior distribution as its limiting distribution.
+To overcome these computational challenges that occurs in Bayesian inference, the posterior distribution is estimated by using Markov Chain Monte Carlo (MCMC) methods. The mcmc methods are numerical sampling methods that allow us to estimate the posterior distribution by constructing a Markov Chain that has the target posterior distribution as its limiting distribution.
 
-Nowadays, there are various methods to implement MCMC, but in this post we focus on the two the most common methods, which are Gibbs sampling (GS) and Metropolis-Hastings (MH). In practice the choice of one over the other depends on the type of problem we dealing with. Gibbs Sampling is used when the full conditional distributions are analytically known, while MH is commonly used when the full conditional posterior distributions of parameters cannot be calculated analytically, which is generally the case for non-conjugate priors. 
+There are multiple algorithms that are used to implement MCMC, but in this post we focus on the two the most common methods, which are Gibbs sampling (GS) and Metropolis-Hastings (MH). In practice the choice of one over the other depends on the type of problem we dealing with. Gibbs Sampling is used when the full conditional distributions are analytically known, while MH is commonly used when the full conditional posterior distributions of parameters cannot be calculated analytically, which is generally the case for non-conjugate priors. 
 
-Most of the time,  for computational benefits including the mixing of the mcmc chain, effective sample size, time it takes to converge or if the chain ever converges, GS is commonly preferred over MH.
-For each MCMC iteration in MH, a new random value for model parameters is proposed. The proposed value is sampled from a proposal distribution, which is usually a normal distribution, and accepted with some probability always less than one because it is not drawn directly from the distribution of the parameters.
-On the other hand, in GS iterations new samples are accepted with probability one, because they are directly drawn from the full conditional distributions rather than the proposal distributions as in MH.
+For computational benefits including the mixing of the mcmc chain, effective sample size, an the cost of the algorithm, GS is usually preferred over MH.
+At each MCMC iteration in MH, a new random value for model parameters is not drawn directly from the distribution of the parameters. The proposed value is sampled from a proposal distribution and accepted with some probability always less than one.
+On the other hand, in GS iterations new samples are directly drawn from their full conditional distributions rather than the proposal distributions as in MH, and therefore all the samples are accepted with probability one.
 
 ## Gibbs Sampling algorithm 
 
-Suppose we have: \
+Suppose we have:
+
 * A vector of parameters $\boldsymbol{\theta} = (\theta_1,\ldots\,\theta_d)'$, which in the case of linear regression is equivalent to $(\beta_1, \beta_2,\ldots\,\beta_p, \sigma^2)'$, and
 
-* A full conditional posterior for each parameter $[\theta_j|\{\theta_k, k\neq j\}, X]$. Now, 
+* A full conditional posterior distribution for each parameter $[\theta_j|\{\theta_k, k\neq j\}, X]$. Now, 
 
 * Initialize $\boldsymbol{\boldsymbol{\theta}}$, to $(\theta_1^0,\ldots,\theta_d^0)'$,
 
@@ -78,24 +77,21 @@ Suppose we have: \
 &\theta_d^{(t)} && from && [\theta_d^{(t)}|\{\theta_j^{(t)},j<d\}, X],
 \end{align*}
 
-with $N$, the number of MCMC iterations, $X$ the data matrix, and $d$ the number of model parameters.
+where $N$ is the number of MCMC iterations, $X$ the data matrix, and $d$ the number of model parameters.
 As a result, as time $t\rightarrow\infty$, the joint distribution of a sample $\boldsymbol{\theta}^{(t)} = \theta_1^{(t)},\ldots,\theta_d^{(t)}$ converges to the true joint distribution of $\boldsymbol{\theta}$ 
 (Gelfand & Smith 1990).
 
 ## Metropolis Hastings algorithm 
 
-* Suppose we have our target distribution $[\boldsymbol{\theta} | .]$, and the the proposal distribution $[\boldsymbol{\theta^*|\theta}]$.
+* Suppose we have our target posterior distribution $[\boldsymbol{\theta} | .]$, and the the proposal distribution $[\boldsymbol{\theta^*|\theta}]$.
 
 
 * Let $\boldsymbol{\theta}^{(t)}$ be the current value of $\boldsymbol{\theta}$, and $\boldsymbol{\theta}^{(t+1)}$ the new value of $\boldsymbol{\theta}$
 
-Then initialize $\boldsymbol{\theta}$ to $\boldsymbol{\theta}^{(0)}$, and\
+Then initialize $\boldsymbol{\theta}$ to $\boldsymbol{\theta}^{(0)}$, and for $t = 1,\ldots,N$, do:
 
-For $t = 1,\ldots,N$, do:\
 propose $\boldsymbol{\theta}^*\sim [\boldsymbol{\theta}^* | \boldsymbol{\theta}^{(t)}]$\
 Compute the acceptance probability:
-
-
 
 \begin{equation}\label{eqn:accept-ratio}
 \alpha = min\left(1,\frac{[\boldsymbol{\theta}^* | .]}{[\boldsymbol{\theta}^{(t)} | .]}\times
@@ -103,11 +99,6 @@ Compute the acceptance probability:
 \end{equation}
 
 
-
-\[
- \alpha = min\left(1,\frac{[\boldsymbol{\theta}^* | .]}{[\boldsymbol{\theta}^{(t)} | .]}\times
- \frac{[\boldsymbol{\theta}^{(t)} |\boldsymbol{\theta}^*]}{[\boldsymbol{\theta}^*|\boldsymbol{\theta}^{(t)} ]}\right)
-\]
 Sample  $u\sim Unif[0,1]$\
 If $u < \alpha$, set $\boldsymbol{\theta}^{(t+1)} = \boldsymbol{\theta}^*$\
 otherwise, set $\boldsymbol{\theta}^{(t+1)} = \boldsymbol{\theta}^{(t)}$\
@@ -141,7 +132,7 @@ There are several choices for prior distributions for regression model parameter
 
 For the normal likelihood, one possible conjugate prior for $\sigma^2$ in an inverse gamma, while $\boldsymbol{\beta} = (\beta_0, \beta_1, \ldots, \beta_p)'$ can be assigned a normal prior or a Non-informative prior, such us a uniform prior. In this post, we are considering an inverse gamma prior for $\sigma^2$, $\sigma^2 \sim IG(a, b)$ and a normal prior for $\boldsymbol{\beta}$, such that $\boldsymbol{\beta}\sim N(\boldsymbol{\mu_0, \Sigma_0})$, where $\boldsymbol{\mu_0} = (\mu_{01}, \ldots, \mu_{0p})'$ is a prior mean vector and $\Sigma_0$ a prior covariance matrix.
 
-## Normal distribution for regression coefficients
+## Why a normal distribution for regression coefficients?
 
 A common choice  for regression coefficients prior is a Gaussian distribution.\
 Recall that the least square estimate for $\boldsymbol{\beta}$, $\boldsymbol{\hat{\beta}}$ is given by 
@@ -161,9 +152,10 @@ var(\boldsymbol{\hat{\beta}}) = \sigma^2(X^{T}X)^{-1}.
 
 Notice that $\boldsymbol{\hat{\beta} = \underbrace{(X^TX)^{-1}X^T}_{constant}y}$
 is a linear combination of multivariate normal random variables, $\mathbf{y}$, which leads to conclude that $\boldsymbol{\hat{\beta}}$ will also have a normal distribution.
-Therefore, from the Equation \ref{eqn:beta-hat} and \ref{eqn:var-beta-hat} we can estimated the distribution for the regression coefficients $\boldsymbol{\beta} = (\beta_1,\ldots\,\beta_p)'$ as 
-$$\boldsymbol{\beta \sim N(\hat{\beta}, \sigma^2(X^{T}X)^{-1})}$$.
-Hence, for posterior updates, it is reasonable to assign a normal prior to $\boldsymbol{\beta}$.
+
+Therefore, from the Equation \ref{eqn:beta-hat} and \ref{eqn:var-beta-hat} we can estimate the distribution for the regression coefficients $\boldsymbol{\beta} = (\beta_1,\ldots\,\beta_p)'$ as 
+$$\boldsymbol{\beta \sim N(\hat{\beta}, \sigma^2(X^{T}X)^{-1})}.$$
+Hence, for conjugate posterior update, it is reasonable to assign a normal prior to $\boldsymbol{\beta}$.
 
 ## Posterior distribution
 
@@ -175,8 +167,8 @@ In practice, the more data we observe, the better we can estimate the true distr
 ### Posterior distribution for $\boldsymbol{\beta}$ 
 
 Given the observed data $\mathbf{y|X}, \boldsymbol{\beta},\sigma^2 \sim N(X\boldsymbol{\beta}, \sigma^2I_n)$, and the prior on $\boldsymbol{\beta}$ being $N(\boldsymbol{\mu_0, \Sigma_0})$,
-the posterior distribution of $\boldsymbol{\beta}$, \
-$\boldsymbol{\beta| .}\sim N(\mu_0, \Sigma_0) \times N(\boldsymbol{X\beta, \sigma^2I_n}) \sim N(\boldsymbol{\mu_n, \Sigma_n})$,
+the posterior distribution of $[[\boldsymbol{\beta}$, \
+$[\boldsymbol{\beta| .}]\sim N(\mu_0, \Sigma_0) \times N(\boldsymbol{X\beta, \sigma^2I_n}) \sim N(\boldsymbol{\mu_n, \Sigma_n})$,
 with
 
 \begin{equation}
@@ -194,7 +186,7 @@ In practice, it is common to choose a prior for $\boldsymbol{\beta }$ to be $N(\
 ### Posterior distribution for $\sigma^2$
 
 Given $\boldsymbol{\beta}$, the posterior for $\sigma^2$ can be calculated as follows:\
-$\sigma^2|\boldsymbol{y,\beta} \sim N(\boldsymbol{X\beta, \sigma^2I_n}) \times IG(a , b) \sim IG(a_n , b_n)$, where
+$[\sigma^2|\boldsymbol{y,\beta}] \sim N(\boldsymbol{X\beta, \sigma^2I_n}) \times IG(a , b) \sim IG(a_n , b_n)$, where
 
 * $a_n = \frac{n}{2} + a$ and
 * $b_n = \frac{1}{2\sigma^2}\boldsymbol{(y - X\beta)^T(y -  X\beta)} + b$
@@ -206,64 +198,54 @@ $\sigma^2|\boldsymbol{y,\beta} \sim N(\boldsymbol{X\beta, \sigma^2I_n}) \times I
 source(here::here("R", "libraries.R"))
 source(here::here("R", "convert-to-coda.R"))
 source(here::here("R", "mcmc_lm.R"))
-#source(here::here("R", "mcmc_lm_mh.R"))
+source(here::here("R", "adapt_mh_multi_lm.R"))
 ```
 
-# Simulated data for model training and testing 
+### Simulated data for model training and testing 
 
-In this post we use simulated data consisting of a matrix of covariates $\mathbf{X} = (\mathbf{x_1, \ldots, \mathbf{x_p}})'$, and predetermined parameters $\boldsymbol{\beta} = (\beta_0, \ldots, \beta_p)'$ and $\sigma^2$, where p represents the number covariates including the column of ones for the intercept $\beta_0$. 
-In this example we simulate the data as follows:
+In this post we are using simulated data consisting of a matrix of covariates $\mathbf{X} = (\mathbf{x_1, \ldots, \mathbf{x_p}})'$, and predetermined parameters $\boldsymbol{\beta} = (\beta_0, \ldots, \beta_p)'$ and $\sigma^2$, where p represents the number covariates including the column of ones for the intercept $\beta_0$. 
 
 ```{r, echo = TRUE}
 set.seed(111)
-k <- 5
-n <- 1000
-mu_0 <- rep(5,k)
-a <- 1
-b <- 1
-true_sigma_sq <- rinvgamma(a,b)
-X <- cbind(1,mvrnorm(n, mu_0, diag(sqrt(true_sigma_sq), nrow = k, ncol = k)))
-p = ncol(X)
-mean_true_beta <- rep(0, 6)
-true_beta <- mvrnorm(1, mean_true_beta, diag(10, nrow = p, ncol = p))
-y <- X %*% true_beta + rnorm(n)
-plot(y, X %*% true_beta, main = " Response vs expected response", ylab = "expecte response", cex.lab = 1, cex.main=1)
+
+n = 100
+p <- 5 
+truesigma2 = 4
+truebeta <- c(rmvn(1, rep(2, p), diag(20, nrow = p, ncol = p)))
+X <- cbind(1, rmvn(n, rep(50, p-1), diag(1, nrow = p-1, ncol = p-1)))
+y <- X %*% truebeta + rnorm(n, mean = 0,  sd = sqrt(truesigma2))
+
+plot(y, X %*% truebeta, main = " Response vs expected response", 
+     ylab = "expecte response", cex.lab = 1, cex.main=1)
+
 ```
 
-# Implementing mcmc using Gibbs sampling algorithm
+### run mcmc using Gibbs sampling algorithm
 
 Running mcmc may take a long time depending on the the type of problem we are solving. To save us this time, we run it once and save the output in our results folder so that we will not have to rerun the mcmc, but we load the output instead.
 
-The following piece of code checks if the mcmc output "out_lm" is not already save in the results folder, and if it is not there call the function "mcmc_lm" to run mcmc using Gibbs sampling algorithm and then save the output "out_lm"
-in the results folder.
+The following example shows how to check if the mcmc output "out_lm" is not already save in the results folder, and if it is not there, call the function "mcmc_lm" to run mcmc using Gibbs sampling algorithm and then save the output as "out_lm" in the results folder.
  
 ```{r, echo = TRUE}
 
-N = 5000
-
-if(!file.exists(here::here("results", "out_lm"))){
+if(!file.exists(here::here("results", "out_lm.RData"))){
    
-    ptm <- proc.time() # timing
-   
-    out_lm <- mcmc_lm(N) 
-    save(out_lm,  file = here::here("results", "out_lm"))
-    
-   proc.time() - ptm
-   
-} 
-
-load(here::here("results", "out_lm"))
+    out_lm <- mcmc_lm(niter = 20000) 
+    save(out_lm,  file = here::here("results", "out_lm.RData"))
+} else {
+  
+  load(here::here("results", "out_lm.RData"))
+}
 
 ```
 
-# Gibbs sampling model disgnostics 
 
-## Check mcmc performance
+### Check Gibbs samling mcmc performance
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 # burn_in <- seq(1:2000)
-# beta_out <- out[[1]][-burn_in, ]
-# sigma_out <- out[[2]][-burn_in]
+# beta_out <- out_lm[[1]][-burn_in, ]
+# sigma_out <- out_lm[[2]][-burn_in]
 
 # Rearranging the mcmc output to comfort with coda package
 
@@ -271,114 +253,75 @@ out_coda <- as.mcmc(convert_to_coda_single_chain(out_lm))
 out_coda <- tidy_draws(out_coda) ## convert to tidybay
 ```
 
-### Trace plots
+## Trace plots
 
-A trace plot is a graph showing sampled values at each mcmc  iteration. It provides a visual evaluation about convergence and mixing of the chain. As shown in the Figure \@ref(fig:trace-plot), our chain mixes well and seems to have converged.
+A trace plot is a graph showing mcmc samples at each iteration. It provides a visual evaluation about convergence and mixing of the chain. As shown in the Figure \@ref(fig:trace-plot), chain mixes well and seems to have converged.
 
 ```{r trace-plot, fig.cap="Trace plot for model parameters", echo = FALSE, warning=FALSE}
 
 out_coda %>%
-    mcmc_trace(regex_pars = c("beta", "sigma_sq"),
+    mcmc_trace(regex_pars = c("beta", "sigma2"),
               facet_args = list(nrow = 3,  ncol = 3))
 ```
-The next plots show the parameter posterior distributions compared to the true parameters we used to simulate the data. This is one of the advantages of using simulated data, because it it allows us to assess the performance of the model by comparing the true parameter to the estimated parameters.
 
-```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.width=6, fig.height=4}
-plot(out_lm$sigma_sq, type = "l" , main = "True error variance vs estimated error variance", cex.main=1)
-abline(h = true_sigma_sq, col = "red")
-matplot(out_lm$beta, type = "l",  xlab = "iterations", col = c("red",  "blue", "green", "purple", "black", "orange"), main = "True beta vs estimated beta",  ylim = c(-10, 10),  cex.main=1)
-abline(h = true_beta, col = c("red",  "blue", "green", "purple", "black", "orange"))
+The next plots show the parameter posterior distributions compared to the true parameters we used to simulate the data. This is one of the advantages of using simulated data, because it allows us to assess the performance of the model by comparing the true parameter to the estimated parameters.
+
+```{r trace-plot1, fig.cap="Trace plot for model parameters", echo = FALSE, warning=FALSE}
+colors <- c("red",  "blue", "green", "purple", "black", "orange")
+
+plot(out_lm$sigma2, type = "l" , main = "True error variance vs estimated error variance", cex.main=1)
+abline(h = truesigma2, col = "red")
+
+matplot(out_lm$beta, type = "l",  xlab = "iterations", ylab = "beta values",
+        col = colors, main = "True beta vs estimated beta", cex.main=1)
+abline(h = truebeta, col = colors)
+
+plot(truebeta, apply(out_lm$beta, 2, mean), ylab = "beta post mean", xlab = "true beta",
+     main  = "true beta vs beta posterior mean ")
+abline(0, 1, col = "red")
 ```
-
-### Acceptance ratio 
-
-The acceptance ratio is the probability of accepting a new candidate in mcmc iterations as a sample from the distribution of the parameters. Since new sample in Gibbs Sampling iterations are drawn directly from the full conditional posterior distributions, they are accepted with probability one. However, this is not the case in MH as we can see in Figure \@ref(fig:accept-ratio)
 
 ### Effective sample size
 
-Effective sample size (ESS) can be defined as an estimate of the number of independent draws from the posterior generated by the Markov chain runs. Therefore, the larger the ratio ESS/N, where N is the number of mcmc iterations, the more efficient the the chain will be. A very small value, commonly less that 0.1 indicates a very high autocorrelation among mcmc samples. The Figure \@ref(fig:Eff-sample-size) shows that the effective sample size for this model, where the value of the ration is indicated by a dot at the end of the line.
-Note that the ESS greater than one, is commonly due to the negative autocorrelation between mcmc samples.
+Effective sample size (ESS) can be defined as an estimate of the number of independent draws from the posterior distributions generated by the Markov chain runs. With the number of mcmc iterations N, the larger the ratio ESS/N, the more efficient the the chain will be. A very small value, commonly less that 0.1 indicates a very high autocorrelation among mcmc samples. Figure \@ref(fig:Eff-sample-size) shows that the effective sample size for this model, where the value of the ration is indicated by a dot at the end of the line.
+The ESS greater than one, is commonly due to the negative autocorrelation between mcmc samples.
 
 ```{r Eff-sample-size, fig.cap="mcmc effective ratios", echo = FALSE, warning=FALSE}
- mcmc_neff(effectiveSize(out_coda) / N)   
-```
+ mcmc_neff(effectiveSize(out_coda)/10000)  
 
-### Other plots illustrating model parameter posterior distributions.
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.width=8, fig.height=4}
-plot_title1 <- ggtitle("Credible intervals for model parameter")
-plot_title2 <- ggtitle("Credible intervals for regression coefficints")
-title3 <- ggtitle("Posterior density for regression coefficients")
-
-out_coda %>%
-    mcmc_intervals(regex_pars = c("beta", "sigma_sq")) + plot_title1
-out_coda %>%
-    mcmc_areas(regex_pars = c("beta"),
-               prob = 0.8, # 80% intervals
-               prob_outer = 0.99, # 99%
-               point_est = "mean") + plot_title2
-
-color_scheme_set("blue")
-mcmc_dens(out_coda, regex_pars = c("beta")) + title3 
-```
-
-### Regression model diagnostics
-
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
-beta_post_mean <- apply(out_lm$beta, 2, mean) # Posterior mean of beta
-
-y_pred <- X %*% beta_post_mean
-
-residuals <- y - y_pred
-
-# Fitted density vs true density
-
-plot(density(y), col = "red", main = "Fitted density vs observed density", cex.main=1)
-lines(density(y_pred), col = "blue")
-legend("topright", legend = c("true density",  "fitted density"),
-       col = c("red", "blue"), lty=1:2, cex=0.8)
-
-# Residual and fitted values plots
-
-par(mfrow = c(2,2))
-hist(residuals, main = "Residual histogram",  cex.main=1)
-qqnorm(residuals, main = "Residual qqplot", cex.main=1)
-abline(c(0, 1), col ="blue")
-plot( y_pred, residuals, main = "Resuduals vs fitted values", cex.main=1)
-plot(y, y_pred, main = "Observed values vs predicted values", cex.main=1)
-abline(c(0, 1), col ="blue") ## a line of 45 degree angle
+#effectiveSize(out_coda)/10000
 ```
 
 # Metropoilis Hastings for linear regression
 
-Metroplolis-Hastings algorithm aims to sample from a joint posterior distribution with unknown analytic form. To draw sample from an intractable joint posterior, at each MH iterations new samples are neither directly drawn from the joint posterior distribution nor the full conditional distributions, but from an other distribution commonly  called a proposal distribution.
-
-At each iteration of MH new samples are not directly drawn from the distribution of the parameters; they come from a proposal distribution,  commonly chosen to be Gaussian distribution. The fact that new parameter values proposed in MH mcmc iterations are not from the distribution of the parameters, they may be accepted or rejected based on how far away they are from the target joint posterior distribution. As a result, in high dimensional parameter spaces, the acceptance rate and effective sample size are generally less in MH than Gibbs sampling with the same number of iterations. Therefore, Gibbs sampling is more often preferred over MH due to the improved computational benefits, especially in high dimensional parameter space
-
-Proposing sample from an other distribution has advantages, weakens and challenges. The main advantage is that MH does not require the full conditional posterior distributions in their parametric form, which makes it work even if the priors are not conjugate with their posteriors.
-On the other hand, at each MH iteration proposed samples are accepted with probability less that one, because they come from the proposal distribution rather than being directly drawn from parameter distributions. In addition to the acceptance rate issue, the proposal distribution parameters should be chosen carefully for the chain to mix well, and it also advisable to work on log scale to avoid computational errors.
+Using Metropolis-Hastings algorithm to sample from the joint posterior distribution using a Gaussian proposal distribution, has some advantages, weakens and challenges. The main advantage is that MH does not require the full conditional posterior distributions in their parametric form, which makes it work even if the priors are not conjugate with their posteriors. On the other hand, MH mcmc samples are accepted with probability less that one, because they come from the proposal distribution rather than being directly drawn from parameter distributions. In addition to the acceptance rate issue, the proposal distribution parameters should be chosen carefully for the chain to mix well, and it requires to work on log scale to avoid computational errors.
 
 ## Proposal distribution
 
-There are various way of choosing proposal distributions, but the most common choices are normal and uniform distributions, because their supports and shapes can match many other distributions.
-Normal proposals have a special advantage, because the distribution being symmetric provide a mathematical advantages leading to a simpler form of the acceptance ratio in Equation \ref{eqn:accept-ratio} to
+The most common choice for proposal distribution is a normal distribution.
+Because normal distributions are symmetric, with a Gaussian proposal distribution the acceptance ratio in \ref{eqn:accept-ratio} simplifies to
 
 \begin{equation}
 \label{eqn:accept-ratio-reduced}
 \alpha = min\left(1,\frac{[\boldsymbol{\theta}^* | .]}{[\boldsymbol{\theta}^{(t)} | .]} \right).
 \end{equation}
 
-Therefore, a normal proposal is commonly preferred in practice.
 
-## Acceptance ration and mixing issues
+### Acceptance ration and mixing 
 
-With a normal proposal distribution $[x|\mu, \sigma^2]$, the acceptance and rejection of the new sample mainly depends on the proposal variance $\sigma^2$.
+With a normal proposal distribution $[x|\mu, \sigma^2]$, the acceptance and rejection of the new sample mainly depends on the proposal variance $\sigma^2$. Figure \@ref(fig:tuning-choices) illustrates different behaviors 
+in trace plots resulting from different choices of tuning parameters.
+
+```{r tuning-choices, fig.cap="Trace plots resulting from different tuning parameters"}
+knitr::include_graphics(here::here("figures", "MH_tuning_choices.png"))
+```
 
  * If the proposal variance is too small, the acceptance rate will be high, because the proposed value and the current value are very close. In this case however, the algorithm takes a long time to explore the whole parameter space. In addition, successive sample are highly correlated, which reduces the effective sample size and makes the algorithm converge slowly.
 
  * If the proposal is too wide, the proposal is more likely to be rejected and the acceptance rate will be too small, because the algorithm makes big steps from the current state to the new one. As a result, the algorithm may stay at the same location for many iterations, which produces many similar samples. Therefore, the chain will  mot mix well and hence inefficient.
-Obtain efficient samples using MH algorithm with a normal proposal, the proposal variance should neither be too small nor too high.
+
+To obtain efficient samples using MH algorithm with a normal proposal, the proposal variance should neither be too small nor too high; but as shown in Figure \@ref(fig:tuning-choices), it is still difficult to figure out what the optimal or close to optimal tuning parameter would be. In this post we used an adaptive MH mcmc algorithm in which the tuning parameter updates automatically during the run of the algorithm, making the mcmc samples more efficient. For more on adaptive MH mcmc, see 
+[Andrieu and Thoms, 2008](https://people.eecs.berkeley.edu/~jordan/sail/readings/andrieu-thoms.pdf)
 
 ## Working on log scale
 
@@ -388,52 +331,38 @@ it is advisable to use logarithm transformation to transform the product into th
 
 ## Implementing MH in R
 
-<!-- # ```{r, echo = TRUE, message=FALSE, warning=FALSE} -->
-<!-- #  -->
-<!-- # niter <- 5000 -->
-<!-- # beta_tune <- rep(0.01, p) -->
-<!-- # sigma2_tune <- 0.01 -->
-<!-- #  -->
-<!-- #  -->
-<!-- # if(!file.exists(here::here("results", "out_lm_mh"))){ -->
-<!-- #  -->
-<!-- #     ptm <- proc.time() # timing -->
-<!-- #  -->
-<!-- #     out_lm_mh <- mcmc_lm_mh(niter, beta_tune, sigma2_tune) -->
-<!-- #     save(out_lm_mh,  file = here::here("results", "out_lm_mh")) -->
-<!-- #  -->
-<!-- #    proc.time() - ptm -->
-<!-- #  -->
-<!-- # } -->
-<!-- #  -->
-<!-- # load(here::here("results", "out_lm_mh")) -->
-<!-- #  -->
-<!-- # ``` -->
-<!-- #  -->
-<!-- # # Metropolis Hastings model disgnostics -->
+```{r, echo = TRUE, message=FALSE, warning=FALSE}
 
-<!-- ## Check mcmc performance -->
+set.seed(111)
+# load MH mcmc model output
 
-<!-- ```{r, echo = FALSE, warning=FALSE, message=FALSE} -->
-<!-- out_coda_mh <- as.mcmc(convert_to_coda_single_chain(out_lm_mh)) -->
-<!-- out_coda_mh <- tidy_draws(out_coda) ## convert to tidybay -->
-<!-- ``` -->
+if(!file.exists(here::here("results", "adapt__mh_lm_out10.RData"))){
+   
+    adapt__mh_lm_out10 <- Adapt_MH_MCMC_lm(X = X, y = y, K = 10000, 
+                                     Sigma_tune = diag(1, p+1), Sig_chol, update_tune = TRUE)
+    save(adapt__mh_lm_out10 ,  file = here::here("results", "adapt__mh_lm_out10.RData"))
+    
+} else {
+  
+  load(here::here("results", "adapt__mh_lm_out10.RData"))
+}
+```
+# # Metropolis Hastings model disgnostics
 
-<!-- ### Trace plots -->
+## Check mcmc performance
 
-<!-- ```{r trace-plot, fig.cap="Trace plot for model parameters", echo = FALSE, warning=FALSE} -->
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+# out_coda_mh <- as.mcmc(convert_to_coda_single_chain(adapt__mh_lm_out))
+# out_coda_mh <- tidy_draws(out_coda_mh) ## convert to tidybay
+```
 
-<!-- out_coda_mh %>% -->
-<!--     mcmc_trace(regex_pars = c("beta", "sigma2"), -->
-<!--               facet_args = list(nrow = 3,  ncol = 3)) -->
-<!-- out_coda_mh %>% -->
-<!--     mcmc_trace(regex_pars = c("sigma2")) -->
+### Trace plots
 
-<!-- plot(out_lm_mh$sigma2_chain, type = "l" , main = "true sigma squared vs estimated sigma squared") -->
-<!-- abline(h = true_sigma_sq, col = "red") -->
-<!-- matplot(out_lm_mh$beta_chain, type = "l",  xlab = "iterations", col = c("red",  "blue", "green", "purple", "black", "orange"), main = "true beta vs estimated beta") -->
-<!-- abline(h = true_beta, col = c("red",  "blue", "green", "purple", "black", "orange")) -->
-<!-- ``` -->
+```{r trace-plot_mh, fig.cap="Trace plot for model parameters", echo = FALSE, warning=FALSE}
+
+matplot(adapt__mh_lm_out10, type = "l",  xlab = "iterations", col = c("red",  "blue", "green", "purple", "black", "orange"), main = "true beta vs estimated beta")
+abline(h = c(truebeta, truesigma2), col = c("red",  "blue", "green", "purple", "black", "orange"))
+```
 
 <!-- ### Acceptance ratio -->
 
@@ -449,58 +378,114 @@ it is advisable to use logarithm transformation to transform the product into th
 <!-- # knitr::kable(head(accepted_samples)) -->
 <!-- ``` -->
 
-<!-- ### Effective sample size -->
+### Effective sample size
 
-<!-- ```{r Eff-sample-size, fig.cap="mcmc effective ratios", echo = FALSE, warning=FALSE} -->
-<!--  mcmc_neff(effectiveSize(out_coda_mh) / niter) -->
-<!-- ``` -->
+```{r Eff-sample-size_mh, fig.cap="mcmc effective ratios", echo = FALSE, warning=FALSE}
+ # mcmc_neff(effectiveSize(out_coda_mh) / niter)
+effectiveSize(adapt__mh_lm_out10) / 10000
+```
 
-<!-- ### Other plots illustrating model parameter posterior distributions. -->
+### Comparing Regression model diagnostics between Gibbs and MH mcmc
 
-<!-- ```{r, echo = FALSE, warning=FALSE, message=FALSE} -->
-<!-- plot_title1 <- ggtitle("Credible intervals for model parameter") -->
-<!-- plot_title2 <- ggtitle("Credible intervals for regression coefficints") -->
-<!-- title3 <- ggtitle("Posterior density for regression coefficients") -->
-
-<!-- out_coda_mh %>% -->
-<!--     mcmc_intervals(regex_pars = c("beta_chain", "sigma2_chain")) + plot_title1 -->
-<!-- out_coda_mh %>% -->
-<!--     mcmc_areas(regex_pars = c("beta_chain"), -->
-<!--                prob = 0.8, # 80% intervals -->
-<!--                prob_outer = 0.99, # 99% -->
-<!--                point_est = "mean") + plot_title2 -->
-
-<!-- color_scheme_set("blue") -->
-<!-- mcmc_dens(out_coda_mh, regex_pars = c("beta_chain")) + title3 -->
-<!-- ``` -->
-<!-- ### Regression model diagnostics -->
-
-<!-- ```{r, echo = FALSE, warning=FALSE, message=FALSE} -->
-<!-- beta_post_mean <- apply(out_lm_mh$beta_chain, 2, mean) # Posterior mean of beta -->
-
-<!-- y_pred_mh <- X %*% beta_post_mean -->
-
-<!-- resid_mh <- y - y_pred_mh -->
-
-<!-- # Fitted density vs true density -->
-
-<!-- plot(density(y), col = "red", main = "Fitted density vs observed density") -->
-<!-- lines(density(y_pred_mh), col = "blue") -->
-<!-- legend("topright", legend = c("true density",  "fitted density"), -->
-<!--        col = c("red", "blue"), lty=1:2, cex=0.8) -->
-
-<!-- # Residual and fitted values plots -->
-
-<!-- par(mfrow = c(2,2)) -->
-<!-- hist(resid_mh, main = "residual histogram") -->
-<!-- qqnorm(resid_mh, main = "residual qqplot") -->
-<!-- abline(c(0, 1), col ="blue") -->
-<!-- plot( y_pred_mh, resid_mh, main = "resuduals vs fitted values") -->
-<!-- plot(y, y_pred_mh, main = "Observed values vs predicted values") -->
-<!-- abline(c(0, 1), col ="blue") ## a line of 45 degree angle -->
-<!-- ``` -->
+### Gibbs mcmc regression model diagnostics
 
 
+```{r, Gibbs-model-diag, fig.cap = "Gibbs mcmc regression model diagnostics", echo = FALSE, warning=FALSE, message=FALSE}
+beta_post_mean <- apply(out_lm$beta, 2, mean) # Posterior mean of beta
+
+y_pred <- X %*% beta_post_mean
+
+residuals <- y - y_pred
+
+# Fitted density vs true density
+plot(density(y_pred), col = "red", main = "Fitted density vs observed density", cex.main=1)
+plot(density(y), col = "red", main = "Fitted density vs observed density", cex.main=1)
+lines(density(y_pred), col = "blue")
+legend("topright", legend = c("true density",  "fitted density"),
+       col = c("red", "blue"), lty=1:2, cex=0.8)
+
+# Residual and fitted values plots
+
+par(mfrow = c(2,2))
+hist(residuals, main = "Residual histogram",  cex.main=1)
+qqnorm(residuals, main = "Residual qqplot", cex.main=1)
+qqline(residuals, col = "red")
+plot( y_pred, residuals, main = "Resuduals vs fitted values", cex.main=1)
+plot(y, y_pred, main = "Observed values vs predicted values", cex.main=1)
+abline(c(0, 1), col ="blue") ## a line of 45 degree angle
+```
+
+### MH regression model diagnostics
+
+Consider the same number of iteration as in Gibbs sampling, $N = 10,000$
+
+```{r, MH-model-diag10, fig.cap = "10000 iteratons MH mcmc regression model diagnostics", echo = FALSE, warning=FALSE, message=FALSE}
+beta_post_mean_mh10 <- apply(adapt__mh_lm_out10[, 1:p], 2, mean) # Posterior mean of beta
+
+y_pred_mh10 <- X %*% beta_post_mean_mh10
+
+resid_mh10 <- y - y_pred_mh10
+
+# Fitted density vs true density
+
+plot(density(y), col = "red", main = "Fitted density vs observed density")
+lines(density(y_pred_mh10), col = "blue")
+legend("topright", legend = c("true density",  "fitted density"),
+       col = c("red", "blue"), lty=1:2, cex=0.8)
+
+# Residual and fitted values plots
+
+par(mfrow = c(2,2))
+hist(resid_mh10, main = "residual histogram")
+qqnorm(resid_mh10, main = "residual qqplot")
+qqline(resid_mh10, col = "red")
+plot(resid_mh10, y_pred_mh10, main = "resuduals vs fitted values")
+plot(y, y_pred_mh10, main = "Observed values vs predicted values")
+#abline(c(0, 1), col ="blue") ## a line of 45 degree angle
+```
+
+Consider $N = 100,000$ 
+
+```{r, echo = TRUE, message=FALSE, warning=FALSE}
+
+set.seed(111)
+# load MH mcmc model output
+
+if(!file.exists(here::here("results", "adapt__mh_lm_out100.RData"))){
+   
+    adapt__mh_lm_out100 <- Adapt_MH_MCMC_lm(X = X, y = y, K = 100000, 
+                                     Sigma_tune = diag(1, p+1), Sig_chol, update_tune = TRUE)
+    save(adapt__mh_lm_out100 ,  file = here::here("results", "adapt__mh_lm_out100.RData"))
+    
+} else {
+  
+  load(here::here("results", "adapt__mh_lm_out100.RData"))
+}
+```
 
 
+```{r, MH-model-diag100, fig.cap = "100,000 iterations MH mcmc regression model diagnostics", echo = FALSE, warning=FALSE, message=FALSE}
 
+beta_post_mean_mh100 <- apply(adapt__mh_lm_out100[, 1:p], 2, mean) # Posterior mean of beta
+
+y_pred_mh100 <- X %*% beta_post_mean_mh100
+
+resid_mh100 <- y - y_pred_mh100
+
+# Fitted density vs true density
+
+plot(density(y), col = "red", main = "Fitted density vs observed density")
+lines(density(y_pred_mh100), col = "blue")
+legend("topright", legend = c("true density",  "fitted density"),
+       col = c("red", "blue"), lty=1:2, cex=0.8)
+
+# Residual and fitted values plots
+
+par(mfrow = c(2,2))
+hist(resid_mh100, main = "residual histogram")
+qqnorm(resid_mh100, main = "residual qqplot")
+qqline(resid_mh100, col = "red")
+plot(resid_mh10, y_pred_mh100, main = "resuduals vs fitted values")
+plot(y, y_pred_mh100, main = "Observed values vs predicted values")
+#abline(c(0, 1), col ="blue") ## a line of 45 degree angle
+```
