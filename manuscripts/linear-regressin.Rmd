@@ -220,7 +220,7 @@ plot(y, X %*% truebeta, main = " Response vs expected response",
 
 ```
 
-### run mcmc using Gibbs sampling algorithm
+### Run mcmc using Gibbs sampling algorithm
 
 Running mcmc may take a long time depending on the the type of problem we are solving. To save us this time, we run it once and save the output in our results folder so that we will not have to rerun the mcmc, but we load the output instead.
 
@@ -237,6 +237,7 @@ if(!file.exists(here::here("results", "out_lm.RData"))){
   load(here::here("results", "out_lm.RData"))
 }
 
+mean(out_lm[[2]])
 ```
 
 
@@ -266,19 +267,23 @@ out_coda %>%
 
 The next plots show the parameter posterior distributions compared to the true parameters we used to simulate the data. This is one of the advantages of using simulated data, because it allows us to assess the performance of the model by comparing the true parameter to the estimated parameters.
 
-```{r trace-plot1, fig.cap="Trace plot for model parameters", echo = FALSE, warning=FALSE}
-colors <- c("red",  "blue", "green", "purple", "black", "orange")
+```{r trace-plot1, fig.cap="Trace plot to compare mcmc sample to the true values. This plot does not include the intercept for a good visualization", echo = FALSE, warning=FALSE}
 
-plot(out_lm$sigma2, type = "l" , main = "True error variance vs estimated error variance", cex.main=1)
+#colors <- c("red",  "blue", "green", "purple", "black", "orange")
+
+par(mfrow = c(1,3))
+
+plot(out_lm$sigma2, type = "l" , main = "True sigma2 vs estimated sigma2", cex.main=1)
 abline(h = truesigma2, col = "red")
 
-matplot(out_lm$beta, type = "l",  xlab = "iterations", ylab = "beta values",
-        col = colors, main = "True beta vs estimated beta", cex.main=1)
-abline(h = truebeta, col = colors)
+matplot(out_lm$beta[,-1], type = "l", xlab = "iterations", ylab = "beta values", 
+        col = c("red",  "blue", "green", "purple", "black"), 
+        main = "True beta vs estimated beta", cex.main=1)
+abline(h = truebeta, col = c("red",  "blue", "green", "purple", "black"))
 
-plot(truebeta, apply(out_lm$beta, 2, mean), ylab = "beta post mean", xlab = "true beta",
-     main  = "true beta vs beta posterior mean ")
+plot(c(truebeta[-1], truesigma2), c(apply(out_lm[[1]][,-1], 2, mean), mean(out_lm[[2]])), ylab = "beta post mean", xlab = "true beta", main  = "true parameter vs posterior means", cex.main=1)
 abline(0, 1, col = "red")
+
 ```
 
 ### Effective sample size
@@ -307,33 +312,34 @@ Because normal distributions are symmetric, with a Gaussian proposal distributio
 \end{equation}
 
 
-### Acceptance ration and mixing 
+## Acceptance ration and mixing 
 
 With a normal proposal distribution $[x|\mu, \sigma^2]$, the acceptance and rejection of the new sample mainly depends on the proposal variance $\sigma^2$. Figure \@ref(fig:tuning-choices) illustrates different behaviors 
 in trace plots resulting from different choices of tuning parameters.
 
-```{r tuning-choices, fig.cap="Trace plots resulting from different tuning parameters"}
-knitr::include_graphics(here::here("figures", "MH_tuning_choices.png"))
+```{r tuning-choices, echo = FALSE, fig.cap="Trace plots resulting from different tuning parameters"}
+knitr::include_graphics(here::here("figures", "compare-adap-non-adapt.png"))
 ```
 
- * If the proposal variance is too small, the acceptance rate will be high, because the proposed value and the current value are very close. In this case however, the algorithm takes a long time to explore the whole parameter space. In addition, successive sample are highly correlated, which reduces the effective sample size and makes the algorithm converge slowly.
+ * If the proposal variance is too small, the acceptance rate will be high, because the proposed value and the current value are very close. In this case, the algorithm converge slowly and resulting mcmc samples will be highly correlated, which reduces the effective sample size.
 
- * If the proposal is too wide, the proposal is more likely to be rejected and the acceptance rate will be too small, because the algorithm makes big steps from the current state to the new one. As a result, the algorithm may stay at the same location for many iterations, which produces many similar samples. Therefore, the chain will  mot mix well and hence inefficient.
+ * If the proposal is too wide, the proposal is more likely to be rejected and the acceptance rate will be too small, because the algorithm makes big steps from the current state to the new one. If so, the algorithm may stay at the same state for many iterations, resulting in a a Markov chain with many similar samples, hence inefficient.
 
-To obtain efficient samples using MH algorithm with a normal proposal, the proposal variance should neither be too small nor too high; but as shown in Figure \@ref(fig:tuning-choices), it is still difficult to figure out what the optimal or close to optimal tuning parameter would be. In this post we used an adaptive MH mcmc algorithm in which the tuning parameter updates automatically during the run of the algorithm, making the mcmc samples more efficient. For more on adaptive MH mcmc, see 
+To obtain efficient samples using MH algorithm with a normal proposal, the proposal variance should neither be too small nor too high; but as shown in Figure \@ref(fig:tuning-choices), it is still difficult to figure out what the best tuning parameter would be. In this post we used an adaptive MH mcmc algorithm in which the tuning parameter updates automatically during the run of the algorithm, making the mcmc samples more efficient. For more on adaptive MH mcmc, see 
 [Andrieu and Thoms, 2008](https://people.eecs.berkeley.edu/~jordan/sail/readings/andrieu-thoms.pdf)
+
 
 ## Working on log scale
 
-We know by the definition of a likelihood function that it involves a product of many probabilities that may include values very close to zero. As a result, the product may be a number very close to zero that a computer may round to zero. Therefore, working with mathematical expressions with denominator involving likelihood functions would procure a numerical errors if the likelihood is not on log scale.
-Therefore, in calculating the acceptance probability in Equation \ref{eqn:accept-ratio}
-it is advisable to use logarithm transformation to transform the product into the sum leading to a non-zero number.
+We know by the definition of a likelihood function that it involves a product of many probabilities that may include values very close to zero. Such a product results in a very small number that computers will usually round to zero. Therefore, computing expressions containing the likelihood function as a denominator or a product involving a likelihood function as a denominator, causes a numerical error. Foe example, the denominator in acceptance probability in Equation \ref{eqn:accept-ratio}. Working on logarithm scale transforms the likelihood into a sum leading, which resolves the issue.
 
-## Implementing MH in R
+## Fiitting a multiple linear regression using MH algorithm in R
+
 
 ```{r, echo = TRUE, message=FALSE, warning=FALSE}
 
 set.seed(111)
+
 # load MH mcmc model output
 
 if(!file.exists(here::here("results", "adapt__mh_lm_out10.RData"))){
@@ -347,18 +353,17 @@ if(!file.exists(here::here("results", "adapt__mh_lm_out10.RData"))){
   load(here::here("results", "adapt__mh_lm_out10.RData"))
 }
 ```
-# # Metropolis Hastings model disgnostics
 
-## Check mcmc performance
+## Check MH mcmc performance
 
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
-# out_coda_mh <- as.mcmc(convert_to_coda_single_chain(adapt__mh_lm_out))
-# out_coda_mh <- tidy_draws(out_coda_mh) ## convert to tidybay
-```
+<!-- # ```{r, echo = FALSE, warning=FALSE, message=FALSE} -->
+<!-- # out_coda_mh <- convert_to_coda_single_chain(adapt__mh_lm_out10) -->
+<!-- # out_coda_mh <- tidy_draws(out_coda_mh) ## convert to tidybay -->
+<!-- # ``` -->
 
 ### Trace plots
 
-```{r trace-plot_mh, fig.cap="Trace plot for model parameters", echo = FALSE, warning=FALSE}
+```{r trace-plot-mh, fig.cap ="Trace plot for MH mcmc model parameters", echo = FALSE, warning=FALSE}
 
 matplot(adapt__mh_lm_out10, type = "l",  xlab = "iterations", col = c("red",  "blue", "green", "purple", "black", "orange"), main = "true beta vs estimated beta")
 abline(h = c(truebeta, truesigma2), col = c("red",  "blue", "green", "purple", "black", "orange"))
@@ -385,12 +390,12 @@ abline(h = c(truebeta, truesigma2), col = c("red",  "blue", "green", "purple", "
 effectiveSize(adapt__mh_lm_out10) / 10000
 ```
 
-### Comparing Regression model diagnostics between Gibbs and MH mcmc
+## Comparing Regression model diagnostics between Gibbs and MH mcmc
 
 ### Gibbs mcmc regression model diagnostics
 
 
-```{r, Gibbs-model-diag, fig.cap = "Gibbs mcmc regression model diagnostics", echo = FALSE, warning=FALSE, message=FALSE}
+```{r Gibbs-model-diag, fig.cap = "Gibbs mcmc regression model diagnostics", echo = FALSE, warning=FALSE, message=FALSE}
 beta_post_mean <- apply(out_lm$beta, 2, mean) # Posterior mean of beta
 
 y_pred <- X %*% beta_post_mean
@@ -398,7 +403,7 @@ y_pred <- X %*% beta_post_mean
 residuals <- y - y_pred
 
 # Fitted density vs true density
-plot(density(y_pred), col = "red", main = "Fitted density vs observed density", cex.main=1)
+#plot(density(y_pred), col = "red", main = "Fitted density vs observed density", cex.main=1)
 plot(density(y), col = "red", main = "Fitted density vs observed density", cex.main=1)
 lines(density(y_pred), col = "blue")
 legend("topright", legend = c("true density",  "fitted density"),
@@ -415,11 +420,9 @@ plot(y, y_pred, main = "Observed values vs predicted values", cex.main=1)
 abline(c(0, 1), col ="blue") ## a line of 45 degree angle
 ```
 
-### MH regression model diagnostics
+### MH regression model diagnostics $iterations = 10,000$
 
-Consider the same number of iteration as in Gibbs sampling, $N = 10,000$
-
-```{r, MH-model-diag10, fig.cap = "10000 iteratons MH mcmc regression model diagnostics", echo = FALSE, warning=FALSE, message=FALSE}
+```{r MH-model-diag10, fig.cap = "10000 iteratons MH mcmc regression model diagnostics", echo = FALSE, warning=FALSE, message=FALSE}
 beta_post_mean_mh10 <- apply(adapt__mh_lm_out10[, 1:p], 2, mean) # Posterior mean of beta
 
 y_pred_mh10 <- X %*% beta_post_mean_mh10
@@ -428,7 +431,7 @@ resid_mh10 <- y - y_pred_mh10
 
 # Fitted density vs true density
 
-plot(density(y), col = "red", main = "Fitted density vs observed density")
+plot(density(y), col = "red", main = "Fitted density vs observed density", cex.main=1)
 lines(density(y_pred_mh10), col = "blue")
 legend("topright", legend = c("true density",  "fitted density"),
        col = c("red", "blue"), lty=1:2, cex=0.8)
@@ -441,7 +444,7 @@ qqnorm(resid_mh10, main = "residual qqplot")
 qqline(resid_mh10, col = "red")
 plot(resid_mh10, y_pred_mh10, main = "resuduals vs fitted values")
 plot(y, y_pred_mh10, main = "Observed values vs predicted values")
-#abline(c(0, 1), col ="blue") ## a line of 45 degree angle
+abline(c(0, 1), col ="blue") ## a line of 45 degree angle
 ```
 
 Consider $N = 100,000$ 
@@ -449,6 +452,7 @@ Consider $N = 100,000$
 ```{r, echo = TRUE, message=FALSE, warning=FALSE}
 
 set.seed(111)
+
 # load MH mcmc model output
 
 if(!file.exists(here::here("results", "adapt__mh_lm_out100.RData"))){
@@ -461,10 +465,13 @@ if(!file.exists(here::here("results", "adapt__mh_lm_out100.RData"))){
   
   load(here::here("results", "adapt__mh_lm_out100.RData"))
 }
+
+
+matplot(adapt__mh_lm_out100, type = "l")
 ```
 
 
-```{r, MH-model-diag100, fig.cap = "100,000 iterations MH mcmc regression model diagnostics", echo = FALSE, warning=FALSE, message=FALSE}
+```{r MH-model-diag100, fig.cap = "100,000 iterations MH mcmc regression model diagnostics", echo = FALSE, warning=FALSE, message=FALSE}
 
 beta_post_mean_mh100 <- apply(adapt__mh_lm_out100[, 1:p], 2, mean) # Posterior mean of beta
 
@@ -485,7 +492,7 @@ par(mfrow = c(2,2))
 hist(resid_mh100, main = "residual histogram")
 qqnorm(resid_mh100, main = "residual qqplot")
 qqline(resid_mh100, col = "red")
-plot(resid_mh10, y_pred_mh100, main = "resuduals vs fitted values")
+plot(resid_mh100, y_pred_mh100, main = "resuduals vs fitted values")
 plot(y, y_pred_mh100, main = "Observed values vs predicted values")
-#abline(c(0, 1), col ="blue") ## a line of 45 degree angle
+abline(c(0, 1), col ="blue") ## a line of 45 degree angle
 ```
