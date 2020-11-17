@@ -103,8 +103,8 @@ Sig_chol[lower.tri(Sig_chol, diag = TRUE)] <- 1
 # non_adapt_out10 <- Adapt_MH_MCMC_lm(X = X, y = y, K = 10000, Sigma_tune = diag(10, p+1), Sig_chol, update_tune = FALSE)
 # non_adapt_out1  <- Adapt_MH_MCMC_lm(X = X, y = y, K = 10000, Sigma_tune = diag(1,  p+1), Sig_chol, update_tune = FALSE)
 # non_adapt_out0.1 <- Adapt_MH_MCMC_lm(X = X, y = y, K = 10000, Sigma_tune = diag(0.1, p+1), Sig_chol, update_tune = FALSE)
-# adap_out <- Adapt_MH_MCMC_lm(X = X, y = y, K = 10000, Sigma_tune = diag(1, p+1), Sig_chol, update_tune = TRUE)
-# 
+#adap_out <- Adapt_MH_MCMC_lm(X = X, y = y, K = 10000, Sigma_tune = diag(1, p+1), Sig_chol, update_tune = TRUE)
+
 # save(non_adapt_out10, file = here::here("results", "non_adapt_out10.RData"))
 # save(non_adapt_out1 , file = here::here("results", "non_adapt_out1.RData"))
 # save(non_adapt_out0.1, file = here::here("results", "non_adapt_out0.1.RData"))
@@ -119,7 +119,7 @@ Sig_chol[lower.tri(Sig_chol, diag = TRUE)] <- 1
 # matplot(non_adapt_out10, type = "l", col = colors, main = "prop sd = 10", ylim = c(-8, 10))
 # matplot(non_adapt_out1, type = "l", col = colors, main = "prop sd = 1", ylim = c(-8, 10))
 # matplot(non_adapt_out0.1, type = "l", col = colors, main = "prop sd  = 0.1", ylim = c(-8, 10))
-# matplot(adap_out, type = "l", col = colors,  main = "adaptive mcmc", ylim = c(-8, 10))
+#matplot(adap_out, type = "l",  main = "adaptive mcmc", ylim = c(-8, 10))
 # 
 # dev.off() #Save the graph to the window
 # 

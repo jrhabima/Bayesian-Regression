@@ -230,7 +230,7 @@ The following example shows how to check if the mcmc output "out_lm" is not alre
 
 if(!file.exists(here::here("results", "out_lm.RData"))){
    
-    out_lm <- mcmc_lm(niter = 20000) 
+    out_lm <- mcmc_lm(niter = 10000) 
     save(out_lm,  file = here::here("results", "out_lm.RData"))
 } else {
   
@@ -277,9 +277,9 @@ plot(out_lm$sigma2, type = "l" , main = "True sigma2 vs estimated sigma2", cex.m
 abline(h = truesigma2, col = "red")
 
 matplot(out_lm$beta[,-1], type = "l", xlab = "iterations", ylab = "beta values", 
-        col = c("red",  "blue", "green", "purple", "black"), 
+        col = c("red",  "blue", "green", "purple"), 
         main = "True beta vs estimated beta", cex.main=1)
-abline(h = truebeta, col = c("red",  "blue", "green", "purple", "black"))
+abline(h = truebeta[-1], col = c("red",  "blue", "green", "purple"))
 
 plot(c(truebeta[-1], truesigma2), c(apply(out_lm[[1]][,-1], 2, mean), mean(out_lm[[2]])), ylab = "beta post mean", xlab = "true beta", main  = "true parameter vs posterior means", cex.main=1)
 abline(0, 1, col = "red")
@@ -338,20 +338,23 @@ We know by the definition of a likelihood function that it involves a product of
 
 ```{r, echo = TRUE, message=FALSE, warning=FALSE}
 
-set.seed(111)
+#set.seed(111)
 
 # load MH mcmc model output
 
 if(!file.exists(here::here("results", "adapt__mh_lm_out10.RData"))){
    
-    adapt__mh_lm_out10 <- Adapt_MH_MCMC_lm(X = X, y = y, K = 10000, 
-                                     Sigma_tune = diag(1, p+1), Sig_chol, update_tune = TRUE)
+Sig_chol <- matrix(0, p+1, p+1)
+Sig_chol[lower.tri(Sig_chol, diag = TRUE)] <- 1
+
+adapt__mh_lm_out10 <- Adapt_MH_MCMC_lm(X = X, y = y, K = 10000, Sigma_tune = diag(1, p+1), Sig_chol, update_tune = TRUE)
     save(adapt__mh_lm_out10 ,  file = here::here("results", "adapt__mh_lm_out10.RData"))
     
 } else {
   
   load(here::here("results", "adapt__mh_lm_out10.RData"))
 }
+matplot(adapt__mh_lm_out10,  type = "l")
 ```
 
 ## Check MH mcmc performance
@@ -451,7 +454,7 @@ Consider $N = 100,000$
 
 ```{r, echo = TRUE, message=FALSE, warning=FALSE}
 
-set.seed(111)
+#set.seed(111)
 
 # load MH mcmc model output
 
